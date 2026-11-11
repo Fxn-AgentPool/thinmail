@@ -10,7 +10,8 @@ github.com/fxnarji/lapdotfiles (`.config/quickshell/Theme.qml`). Repo: Fxn-Agent
   Add cases to `tests/test_codes.py` when a real mail is misread.
 - `src/thinmail/mail.py`: MIME parsing (`parse` never raises), HTML→text, action-link detection,
   `Mailbox`: one IMAP connection per web session, cache by (folder, UIDVALIDITY, UID),
-  `recent_merged` = Inbox + Junk.
+  `recent_merged` = Inbox + Junk. `find_alias` (catch-all local part or plus tag from To/Cc) is set
+  per message in `Mailbox._parse`; the frontend's alias chips filter client-side.
 - `src/thinmail/web.py`: `Config.load` (env / KEY=value file), in-memory sessions, login throttle,
   `Handler` routes (`/login`, `/logout`, `/api/folders`, `/api/messages[?folder=*]`,
   `/api/messages/<uid>[/html|/delete]`), CSP/headers.
@@ -42,9 +43,15 @@ github.com/fxnarji/lapdotfiles (`.config/quickshell/Theme.qml`). Repo: Fxn-Agent
   (`STALWART_RECOVERY_MODE=1`, `STALWART_RECOVERY_ADMIN=admin:pw`) skips the web wizard.
 - Stalwart files unsigned test mail into "Junk Mail"; that's why the default view merges Inbox + Junk.
   Folder roles come from IMAP LIST special-use flags (`\Junk`, `\Trash`).
+- Stalwart's catch-all keeps the original recipient nowhere but To/Cc: `Delivered-To` names the catch-all
+  target (your own address), `Received:` has no `for <...>`. So Bcc'd mail can't be sorted by alias.
+- Stalwart CLI: set-typed fields take a JSON map (`{"10.0.0.1/32": true}`); a JSON list fails with only
+  "update failed". Proxy trust is per listener: `overrideProxyTrustedNetworks`.
 - Docker's port proxy accepts TCP before Stalwart listens: wait for an SMTP/IMAP greeting, not a socket.
 
 ## Status
+- 2026-11-11: v0.2.0: sorting by alias (catch-all / plus addressing). 41 unit tests, 29/29 smoke checks
+  against Stalwart 1.1.0 with a catch-all, browser-checked (chips, filter, keys, phone).
 - 2026-11-11: v0.1.0 released (executables 22 MB from CI, 8.6 MB built locally; ~36 MB RAM) and .pyz (25 KB) pass the 27 smoke checks.
 - 2026-11-11: v0.1.0. 30 unit tests; end-to-end against Stalwart 1.1.0 (27/27 smoke checks, native
   and in the Docker image, ~18 MB RAM); headless Chromium checked login, list, copy (keyboard and chip),

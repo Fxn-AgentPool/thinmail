@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Deliver sample 2FA mails over SMTP (for trying thinmail against a test server).
 
-    scripts/send_samples.py HOST:PORT RECIPIENT [--only N]
+    scripts/send_samples.py HOST:PORT RECIPIENT [--only N] [--aliases]
+
+--aliases sends each sample to <service>@<recipient's domain> (e.g. github@test.lan),
+as if you had signed up there with a catch-all address.
 """
 import argparse
 import smtplib
@@ -32,6 +35,7 @@ def main():
     p.add_argument("server")
     p.add_argument("rcpt")
     p.add_argument("--only", type=int)
+    p.add_argument("--aliases", action="store_true")
     a = p.parse_args()
     host, _, port = a.server.rpartition(":")
     with smtplib.SMTP(host, int(port), timeout=20) as s:
@@ -39,8 +43,12 @@ def main():
         for i, (frm, subject, text, html) in enumerate(SAMPLES):
             if a.only is not None and i != a.only:
                 continue
+            rcpt = a.rcpt
+            if a.aliases:
+                service = frm.split("<")[0].strip().split()[0]          # "GitHub", "Discord", ...
+                rcpt = f"{service}@{a.rcpt.rpartition('@')[2]}"
             m = EmailMessage()
-            m["From"], m["To"], m["Subject"] = frm, a.rcpt, subject
+            m["From"], m["To"], m["Subject"] = frm, rcpt, subject
             m["Date"], m["Message-ID"] = formatdate(localtime=True), make_msgid("thinmail-test")
             if text is not None:
                 m.set_content(text)
@@ -48,8 +56,8 @@ def main():
                     m.add_alternative(html, subtype="html")
             else:
                 m.set_content(html, subtype="html")
-            s.send_message(m)
-            print("sent", subject)
+            s.send_message(m, to_addrs=[rcpt])
+            print("sent", subject, "->", rcpt)
 
 
 if __name__ == "__main__":

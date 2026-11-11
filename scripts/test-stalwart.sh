@@ -1,5 +1,5 @@
 #!/bin/sh
-# Throwaway Stalwart (Docker) with account alice@test.lan / alice-test-pw-123,
+# Throwaway Stalwart (Docker) with account alice@test.lan / alice-test-pw-123 (catch-all for test.lan),
 # for trying thinmail for real. Ports on 127.0.0.1: IMAPS 10993, SMTP 10025.
 #
 #   scripts/test-stalwart.sh up       # create (or recreate) it
@@ -42,6 +42,8 @@ up)
     # credentials is a map of id -> Credential (a JSON list is refused)
     cli create Account/User --field name=alice --field "domainId=$DOMAIN_ID" \
         --field 'credentials={"0":{"@type":"Password","secret":"alice-test-pw-123"}}'
+    # catch-all: any@test.lan lands in alice's mailbox (thinmail sorts by alias)
+    cli update Domain "$DOMAIN_ID" --json '{"catchAllAddress":"alice@test.lan"}'
     # 2. normal mode: mail listeners with the default (self-signed) certificate
     sudo docker rm -f $NAME >/dev/null
     sudo docker run -d --name $NAME -m 400m $PORTS \

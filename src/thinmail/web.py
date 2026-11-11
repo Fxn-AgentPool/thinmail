@@ -84,7 +84,11 @@ class Config:
         return cls(
             imap=ImapSettings(host=host, port=port, security=security,
                               verify=_bool(get("THINMAIL_IMAP_VERIFY"), True),
-                              cafile=get("THINMAIL_IMAP_CAFILE") or None),
+                              cafile=get("THINMAIL_IMAP_CAFILE") or None,
+                              alias_domains=tuple(d.strip().lstrip("@").lower()
+                                                  for d in (get("THINMAIL_ALIAS_DOMAINS") or "").split(",") if d.strip())
+                                            + ((get("THINMAIL_DEFAULT_DOMAIN").lstrip("@").lower(),)
+                                               if get("THINMAIL_DEFAULT_DOMAIN") else ())),
             listen_host=lhost.strip("[]") or "127.0.0.1",
             listen_port=int(lport),
             secure_cookie=_bool(get("THINMAIL_SECURE_COOKIE"), False),

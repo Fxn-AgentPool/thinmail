@@ -18,6 +18,7 @@ const ICON_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 
 const state = {
   folder: localStorage.getItem("thinmail.folder") || "*",   // "*": Inbox + Junk
+  alias: localStorage.getItem("thinmail.alias") || "",      // "": all, NONE: mail to no alias
   folders: [],
   messages: [],
   known: null,            // keys ("folder/uid") seen so far (null: first load)
@@ -89,6 +90,61 @@ async function api(path, opts = {}) {
 }
 const q = (folder, extra = "") => `?folder=${encodeURIComponent(folder)}${extra}`;
 const keyOf = m => `${m.folder}/${m.uid}`;
+const NONE = "\u0000none";       // alias filter value for mail without an alias
+
+// The messages the current alias filter lets through.
+function visible() {
+  if (!state.alias) return state.messages;
+  return state.messages.filter(m => (m.alias || NONE) === state.alias);
+}
+
+function setAlias(a) {
+  state.alias = a;
+  localStorage.setItem("thinmail.alias", a);
+  if (state.sel !== null && !visible().some(m => m.key === state.sel)) state.sel = null;
+  renderList();
+}
+
+// Alias chips: All · discord 3 · microsoft 1 · other 5, newest alias first.
+function renderAliases() {
+  const nav = $("aliases");
+  const groups = new Map();
+  let none = 0;
+  for (const m of state.messages) {
+    if (!m.alias) { none++; continue; }
+    const g = groups.get(m.alias) || { n: 0, unread: 0, latest: 0 };
+    g.n++; if (!m.seen) g.unread++; g.latest = Math.max(g.latest, m.date);
+    groups.set(m.alias, g);
+  }
+  // No aliases at all: no chips, no filter.
+  nav.classList.toggle("hidden", groups.size === 0);
+  if (!groups.size) { state.alias = ""; return; }
+  // Keep the selected alias visible even when none of its mail is left.
+  if (state.alias && state.alias !== NONE && !groups.has(state.alias)) {
+    groups.set(state.alias, { n: 0, unread: 0, latest: -1 });
+  }
+  const chip = (value, label, n, unread) => {
+    const b = el("button", "alias" + (state.alias === value ? " on" : "") + (unread ? " unread" : ""));
+    b.dataset.value = value;
+    b.appendChild(el("span", "", label));
+    b.appendChild(el("span", "n", String(n)));
+    b.addEventListener("click", () => setAlias(state.alias === value ? "" : value));
+    return b;
+  };
+  const sorted = [...groups.entries()].sort((a, b) => b[1].latest - a[1].latest);
+  nav.replaceChildren(
+    chip("", "All", state.messages.length, 0),
+    ...sorted.map(([a, g]) => chip(a, a, g.n, g.unread)),
+    ...(none || state.alias === NONE ? [chip(NONE, "other", none, 0)] : []),
+  );
+}
+
+function stepAlias(dir) {
+  const values = [...$("aliases").querySelectorAll("button")].map(b => b.dataset.value);
+  if (values.length < 2) return;
+  const i = Math.max(0, values.indexOf(state.alias));
+  setAlias(values[(i + dir + values.length) % values.length]);
+}
 
 function chips(m, big = false) {
   const box = el("span", "chips");
@@ -182,16 +238,24 @@ async function refresh() {
 
 function renderList() {
   const list = $("list");
-  if (!state.messages.length) {
-    list.replaceChildren(el("div", "empty", "no mail here"));
+  renderAliases();
+  const shown = visible();
+  if (!shown.length) {
+    list.replaceChildren(el("div", "empty", state.messages.length ? "no mail for this alias" : "no mail here"));
   } else {
-    const rows = state.messages.map(m => {
+    const rows = shown.map(m => {
       const r = el("div", "row" + (m.seen ? "" : " unread") + (m.key === state.sel ? " sel" : "")
                          + (state.fresh.has(m.key) ? " new" : ""));
       r.dataset.key = m.key;
       r.appendChild(el("span", "dot"));
       const top = el("div", "top");
       top.appendChild(el("span", "from", m.from || m.address || "(unknown)"));
+      if (m.alias && !state.alias) {
+        const tag = el("span", "tag", m.alias);
+        tag.title = `sent to ${m.alias}@… (click to show only these)`;
+        tag.addEventListener("click", ev => { ev.stopPropagation(); setAlias(m.alias); });
+        top.appendChild(tag);
+      }
       top.appendChild(el("span", "when", ago(m.date)));
       r.appendChild(top);
       r.appendChild(chips(m));
@@ -209,7 +273,7 @@ function renderList() {
 
 function renderHero() {
   const now = Date.now() / 1000 - state.serverSkew;
-  const m = state.messages.find(m => (m.code || m.link) && now - m.date < HERO_MINUTES * 60);
+  const m = visible().find(m => (m.code || m.link) && now - m.date < HERO_MINUTES * 60);
   const hero = $("hero");
   hero.classList.toggle("hidden", !m);
   if (!m) { state.hero = null; return; }
@@ -336,9 +400,11 @@ async function deleteOpen() {
       body: JSON.stringify({ folder: m.folder }),
     });
   } catch (e) { toast(e.message); return; }
-  const i = state.messages.findIndex(x => x.key === m.key);
+  const before = visible();
+  const i = before.findIndex(x => x.key === m.key);
   state.messages = state.messages.filter(x => x.key !== m.key);
-  const next = state.messages[Math.min(i, state.messages.length - 1)];
+  const after = visible();
+  const next = after[Math.min(i, after.length - 1)];
   closeReader();
   state.sel = next ? next.key : null;
   renderList();
@@ -356,7 +422,7 @@ $("hero-code").addEventListener("click", () => copyCode(state.hero));
 
 document.addEventListener("keydown", ev => {
   if (ev.ctrlKey || ev.metaKey || ev.altKey || ev.target.matches("input, textarea")) return;
-  const ms = state.messages;
+  const ms = visible();
   const i = ms.findIndex(m => m.key === state.sel);
   const k = ev.key;
   if (k === "j" || k === "ArrowDown") { if (ms.length) select(ms[Math.min(ms.length - 1, i + 1)].key); }
@@ -367,6 +433,8 @@ document.addEventListener("keydown", ev => {
     if (m && m.code) copyCode(m); else toast("no code");
   }
   else if (k === "r") refresh();
+  else if (k === "]") stepAlias(1);
+  else if (k === "[") stepAlias(-1);
   else if (k === "#" || k === "Delete") deleteOpen();
   else if (k === "Escape") closeReader();
   else return;

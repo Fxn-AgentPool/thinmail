@@ -102,6 +102,7 @@ def test_login_flow_and_messages(server):
     data = json.loads(body)
     assert {m["code"] for m in data["messages"]} == {"271828", "314159"}
     assert {m["folder"] for m in data["messages"]} == {"INBOX", "Junk"}
+    assert all("alias" in m for m in data["messages"])
 
     status, body = c("/api/messages/7?folder=Junk")
     assert status == 200 and json.loads(body)["seen"] is True
