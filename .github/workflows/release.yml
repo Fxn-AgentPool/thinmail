@@ -1,0 +1,53 @@
+name: Release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  binary:
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-22.04          # glibc 2.35: runs on this and newer distros
+            arch: x86_64
+          - runner: ubuntu-22.04-arm
+            arch: aarch64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: scripts/build.sh --binary
+      - name: Check the executable starts and serves
+        run: |
+          mv dist/thinmail dist/thinmail-linux-${{ matrix.arch }}
+          dist/thinmail-linux-${{ matrix.arch }} --version
+          THINMAIL_IMAP_HOST=127.0.0.1 THINMAIL_LISTEN=127.0.0.1:8088 dist/thinmail-linux-${{ matrix.arch }} &
+          sleep 3
+          curl -fsS http://127.0.0.1:8088/healthz
+          curl -fsS http://127.0.0.1:8088/login | grep -q "Sign in"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bin-${{ matrix.arch }}
+          path: dist/thinmail-linux-${{ matrix.arch }}
+  release:
+    needs: binary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: scripts/build.sh
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd dist
+          chmod +x thinmail-linux-*
+          sha256sum thinmail-linux-* thinmail.pyz > SHA256SUMS
+          gh release create "$GITHUB_REF_NAME" --title "thinmail $GITHUB_REF_NAME" --generate-notes \
+            thinmail-linux-x86_64 thinmail-linux-aarch64 thinmail.pyz SHA256SUMS

@@ -17,6 +17,8 @@ github.com/fxnarji/lapdotfiles (`.config/quickshell/Theme.qml`). Repo: Fxn-Agent
 - `src/thinmail/static/`: `login.html`, `app.html` (`{{key}}` placeholders, HTML-escaped),
   `style.css` (Theme.qml tokens), `app.js` (no framework; DOM nodes only, never innerHTML for mail).
 - `deploy/`: compose example, systemd unit, config example. `Dockerfile` at the root.
+- `scripts/build.sh [--binary]`: `dist/thinmail.pyz` (zipapp) and `dist/thinmail` (PyInstaller onefile).
+  Tag `vX.Y.Z` → `.github/workflows/release.yml` builds x86_64 + aarch64 on ubuntu-22.04 and publishes them.
 - `scripts/test-stalwart.sh up|down`: throwaway Stalwart 1.x in Docker; `scripts/send_samples.py`.
 
 ## Develop
@@ -43,6 +45,7 @@ github.com/fxnarji/lapdotfiles (`.config/quickshell/Theme.qml`). Repo: Fxn-Agent
 - Docker's port proxy accepts TCP before Stalwart listens: wait for an SMTP/IMAP greeting, not a socket.
 
 ## Status
+- 2026-11-11: release artefacts: executable (8.6 MB, ~36 MB RAM) and .pyz (25 KB) pass the 27 smoke checks.
 - 2026-11-11: v0.1.0. 30 unit tests; end-to-end against Stalwart 1.1.0 (27/27 smoke checks, native
   and in the Docker image, ~18 MB RAM); headless Chromium checked login, list, copy (keyboard and chip),
   HTML sandbox view, phone layout, live arrival (≤ 6 s). Not yet run against a production server.
