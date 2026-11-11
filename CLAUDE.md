@@ -2,7 +2,7 @@
 
 Thin web inbox for a Stalwart mailbox: login page, recent mail, 2FA codes one click away.
 For use on a LAN with a self-hosted Stalwart; look borrowed from the Quickshell config
-github.com/fxnarji/lapdotfiles `.config/quickshell/Theme.qml`). Repo: Fxn-AgentPool/thinmail (private).
+github.com/fxnarji/lapdotfiles (`.config/quickshell/Theme.qml`). Repo: Fxn-AgentPool/thinmail (public).
 
 ## Layout
 - `src/thinmail/codes.py`: `find_code(subject, text)`, a scoring heuristic (keywords nearby,
