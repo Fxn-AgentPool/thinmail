@@ -45,7 +45,7 @@ github.com/fxnarji/lapdotfiles (`.config/quickshell/Theme.qml`). Repo: Fxn-Agent
 - Docker's port proxy accepts TCP before Stalwart listens: wait for an SMTP/IMAP greeting, not a socket.
 
 ## Status
-- 2026-11-11: release artefacts: executable (8.6 MB, ~36 MB RAM) and .pyz (25 KB) pass the 27 smoke checks.
+- 2026-11-11: v0.1.0 released (executables 22 MB from CI, 8.6 MB built locally; ~36 MB RAM) and .pyz (25 KB) pass the 27 smoke checks.
 - 2026-11-11: v0.1.0. 30 unit tests; end-to-end against Stalwart 1.1.0 (27/27 smoke checks, native
   and in the Docker image, ~18 MB RAM); headless Chromium checked login, list, copy (keyboard and chip),
   HTML sandbox view, phone layout, live arrival (≤ 6 s). Not yet run against a production server.
