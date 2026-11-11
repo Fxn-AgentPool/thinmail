@@ -26,6 +26,20 @@ accent, Geist fonts and raised cards. Set `THINMAIL_ACCENT` to your matugen acce
 
 ## Run
 
+**Single executable** (Linux x86_64 or ARM64, nothing else needed). Get it from the
+[latest release](https://github.com/Fxn-AgentPool/thinmail/releases/latest):
+
+```sh
+curl -fLo thinmail https://github.com/Fxn-AgentPool/thinmail/releases/latest/download/thinmail-linux-x86_64
+chmod +x thinmail
+THINMAIL_IMAP_HOST=mail.example.org THINMAIL_LISTEN=0.0.0.0:8088 ./thinmail
+```
+
+Use `thinmail-linux-aarch64` on a Raspberry Pi or another ARM board. `thinmail.pyz` from the
+same release is the same program as a 25 KB file for any machine with Python 3.10+
+(`python3 thinmail.pyz`). Both take `--config FILE`, and both work with the systemd unit
+below if you change its `ExecStart`. Build them yourself with `scripts/build.sh [--binary]`.
+
 Docker, next to Stalwart (see [`deploy/compose.example.yml`](deploy/compose.example.yml)):
 
 ```sh
@@ -35,7 +49,7 @@ docker run -d --name thinmail -p 8088:8088 \
   -e THINMAIL_IMAP_HOST=mail.example.org thinmail
 ```
 
-Or with Python 3.10+, no dependencies:
+Or install it with pip (Python 3.10+, no dependencies):
 
 ```sh
 python3 -m venv /opt/thinmail && /opt/thinmail/bin/pip install .

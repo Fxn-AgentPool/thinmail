@@ -1,5 +1,7 @@
 # /etc/systemd/system/thinmail.service
 # Install:  python3 -m venv /opt/thinmail && /opt/thinmail/bin/pip install /path/to/thinmail
+#           (or the release executable: install -m755 thinmail-linux-x86_64 /usr/local/bin/thinmail
+#            and ExecStart=/usr/local/bin/thinmail --config /etc/thinmail.conf)
 #           cp deploy/thinmail.conf.example /etc/thinmail.conf && chmod 640 /etc/thinmail.conf
 #           systemctl daemon-reload && systemctl enable --now thinmail
 [Unit]

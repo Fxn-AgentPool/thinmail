@@ -90,7 +90,7 @@ check("delete without Origin refused", s == 403, s)
 s, h, b = req(f'/api/messages/{o["uid"]}/delete', json.dumps({"folder": o["folder"]}).encode(), ctype="application/json")
 check("delete", s == 200, b)
 s, h, b = req("/api/messages")
-check("deleted mail gone from list", all(m["subject"] != o["subject"] for m in json.loads(b)["messages"]))
+check("deleted mail gone from list", all((m["folder"], m["uid"]) != (o["folder"], o["uid"]) for m in json.loads(b)["messages"]))
 trash = next((f["name"] for f in folders if f["role"] == "trash"), None)
 if trash:
     s, h, b = req("/api/messages?folder=" + urllib.parse.quote(trash))
