@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Sign in · {{title}}</title>
+<link rel="icon" href="/static/icon.svg">
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/theme.css">
+</head>
+<body class="login-page">
+<form class="card login" method="post" action="/login" autocomplete="on">
+  <h1>{{title}}<span>.</span></h1>
+  <p class="sub">sign in with your mail account</p>
+  <p class="error">{{error}}</p>
+  <label class="field">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+    <input name="user" value="{{user}}" placeholder="user or address" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus>
+  </label>
+  <label class="field">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+    <input name="password" type="password" placeholder="password" autocomplete="current-password" required>
+  </label>
+  <button class="btn primary" type="submit">Sign in</button>
+</form>
+</body>
+</html>

@@ -1,0 +1,25 @@
+# /etc/systemd/system/thinmail.service
+# Install:  python3 -m venv /opt/thinmail && /opt/thinmail/bin/pip install /path/to/thinmail
+#           cp deploy/thinmail.conf.example /etc/thinmail.conf && chmod 640 /etc/thinmail.conf
+#           systemctl daemon-reload && systemctl enable --now thinmail
+[Unit]
+Description=thinmail web inbox
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/opt/thinmail/bin/thinmail --config /etc/thinmail.conf
+DynamicUser=yes
+Restart=on-failure
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryMax=128M
+
+[Install]
+WantedBy=multi-user.target

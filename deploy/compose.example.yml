@@ -1,0 +1,14 @@
+# Next to Stalwart: thinmail talks IMAPS to it over the compose network.
+services:
+  thinmail:
+    build: ./thinmail          # a clone of this repo
+    restart: unless-stopped
+    ports:
+      - "8088:8088"            # LAN only: don't forward this port on your router
+    environment:
+      THINMAIL_IMAP_HOST: stalwart       # Stalwart's service / container name
+      THINMAIL_IMAP_PORT: "993"
+      THINMAIL_IMAP_VERIFY: "0"          # Stalwart's certificate won't match "stalwart"
+      # THINMAIL_DEFAULT_DOMAIN: example.org   # lets you log in as "me" instead of "me@example.org"
+      # THINMAIL_SECURE_COOKIE: "1"            # when served through HTTPS (reverse proxy)
+    mem_limit: 96m

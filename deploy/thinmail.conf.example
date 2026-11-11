@@ -1,0 +1,17 @@
+# thinmail settings (KEY=value; environment variables of the same name win).
+
+# Stalwart's IMAP server
+THINMAIL_IMAP_HOST=mail.example.org
+THINMAIL_IMAP_PORT=993
+THINMAIL_IMAP_SECURITY=ssl          # ssl (993) | starttls (143) | plain
+THINMAIL_IMAP_VERIFY=1              # 0: accept a self-signed / mismatching certificate
+# THINMAIL_IMAP_CAFILE=/etc/ssl/my-ca.pem
+
+# Web side
+THINMAIL_LISTEN=0.0.0.0:8088        # 127.0.0.1:8088 when behind a reverse proxy on the same host
+# THINMAIL_SECURE_COOKIE=1          # set when users reach it over HTTPS
+# THINMAIL_DEFAULT_DOMAIN=example.org   # log in as "me" instead of "me@example.org"
+# THINMAIL_SESSION_HOURS=12         # idle time before you have to log in again
+# THINMAIL_LIMIT=40                 # mails shown per folder
+# THINMAIL_ACCENT=#f2545b           # accent colour (matugen's, if you like)
+# THINMAIL_TITLE=thinmail
