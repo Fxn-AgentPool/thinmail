@@ -1,7 +1,7 @@
 # thinmail
 
 Thin web inbox for a Stalwart mailbox: login page, recent mail, 2FA codes one click away.
-For the user's LAN (they run Stalwart and Hyprland; look borrowed from their Quickshell config
+For use on a LAN with a self-hosted Stalwart; look borrowed from the Quickshell config
 github.com/fxnarji/lapdotfiles `.config/quickshell/Theme.qml`). Repo: Fxn-AgentPool/thinmail (private).
 
 ## Layout
@@ -45,4 +45,4 @@ github.com/fxnarji/lapdotfiles `.config/quickshell/Theme.qml`). Repo: Fxn-AgentP
 ## Status
 - 2026-11-11: v0.1.0. 30 unit tests; end-to-end against Stalwart 1.1.0 (27/27 smoke checks, native
   and in the Docker image, ~18 MB RAM); headless Chromium checked login, list, copy (keyboard and chip),
-  HTML sandbox view, phone layout, live arrival (≤ 6 s). Not yet run against the user's real server.
+  HTML sandbox view, phone layout, live arrival (≤ 6 s). Not yet run against a production server.
