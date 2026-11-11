@@ -68,6 +68,10 @@ expect = {
 }
 for subj, code in expect.items():
     check(f"code for {subj!r}", subj in by and by[subj]["code"] == code, by.get(subj, {}).get("code"))
+aliases = {m["subject"]: m.get("alias") for m in msgs}
+if any(aliases.values()):     # samples were sent with --aliases
+    check("alias for GitHub mail", aliases.get("[GitHub] Please verify your device") == "github", aliases.get("[GitHub] Please verify your device"))
+    check("alias for Discord mail", aliases.get("Your Discord login code") == "discord", aliases.get("Your Discord login code"))
 check("magic link found", by.get("Confirm your email address", {}).get("link") == "https://slack.com/magic/abc123")
 check("newest first", [m["date"] for m in msgs] == sorted([m["date"] for m in msgs], reverse=True))
 

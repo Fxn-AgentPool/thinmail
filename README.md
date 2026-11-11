@@ -17,7 +17,11 @@ server, but it speaks plain IMAP, so any IMAP server works.
 - Reader: text by default, the mail's HTML on request in a sandboxed frame (no scripts,
   no remote images unless you press *Images*). Opening marks a mail read; delete moves it
   to Trash.
-- Keys: `j`/`k` move, `Enter` open, `c` copy code, `r` refresh, `#` delete, `Esc` close.
+- **Sorted by alias**: sign up everywhere with its own address (`discord@yourdomain`,
+  `microsoft@yourdomain`, or `you+discord@yourdomain`) and thinmail groups the mail by it,
+  as chips above the list. See [Aliases](#aliases).
+- Keys: `j`/`k` move, `Enter` open, `c` copy code, `r` refresh, `[`/`]` previous/next alias,
+  `#` delete, `Esc` close.
 - Python standard library only; about 20 MB of RAM.
 
 The look follows the Quickshell config in
@@ -74,9 +78,32 @@ in [`deploy/thinmail.conf.example`](deploy/thinmail.conf.example).
 | `THINMAIL_LISTEN` | `127.0.0.1:8088` | `0.0.0.0:8088` to reach it from the LAN |
 | `THINMAIL_SECURE_COOKIE` | `0` | `1` when served over HTTPS |
 | `THINMAIL_DEFAULT_DOMAIN` | | log in as `me` instead of `me@example.org` |
+| `THINMAIL_ALIAS_DOMAINS` | | more of your domains for [aliases](#aliases), comma-separated |
 | `THINMAIL_SESSION_HOURS` | `12` | idle time until you have to log in again |
 | `THINMAIL_LIMIT` | `40` | mails listed per folder |
 | `THINMAIL_ACCENT`, `THINMAIL_TITLE` | `#f2545b`, `thinmail` | looks |
+
+## Aliases
+
+Give every service its own address, and thinmail sorts the mail by it: a row of chips
+(*All · discord 2 · microsoft 1 · other 5*) filters the list, and every mail shows its alias.
+A bonus: when spam arrives at `shop@yourdomain`, you know who leaked the address.
+
+Two ways to get addresses like that from Stalwart:
+
+- **Catch-all** (`discord@example.org`): set the domain's *catch-all address* to your own
+  address (Stalwart 1.x: the domain's `catchAllAddress`; in the web admin under the domain's
+  settings). Mail to any unknown address at the domain then lands in your mailbox. Downside:
+  spam to made-up addresses lands there too, though Stalwart's spam filter still applies.
+- **Plus addressing** (`you+discord@example.org`): works without a catch-all when
+  sub-addressing is enabled for the domain (Stalwart's default). Some sign-up forms reject
+  the `+`.
+
+thinmail reads the alias from the mail's `To`/`Cc`. That's where services put the address
+you registered with. Mail that hides its recipients (Bcc, `undisclosed-recipients`) shows up
+as *other*: Stalwart's catch-all delivery doesn't keep the original address anywhere else.
+Your domains are learned from your login and Stalwart's `Delivered-To` header. List extra
+ones in `THINMAIL_ALIAS_DOMAINS`.
 
 ## Security
 

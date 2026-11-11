@@ -138,11 +138,14 @@ class Message:
     seen: bool = False
     flags: set = field(default_factory=set)
     folder: str = "INBOX"
+    recipients: list = field(default_factory=list)   # To + Cc addresses, lower case
+    delivered: list = field(default_factory=list)    # Delivered-To / X-Original-To (the mailbox's own address)
+    alias: str | None = None                          # set by Mailbox, see find_alias
 
     def summary(self) -> dict:
         return {
             "uid": self.uid, "folder": self.folder, "subject": self.subject, "from": self.sender, "address": self.address,
-            "date": self.date, "seen": self.seen, "code": self.code, "link": self.link,
+            "date": self.date, "seen": self.seen, "code": self.code, "link": self.link, "alias": self.alias,
             "preview": " ".join(self.text.split())[:160],
         }
 
@@ -168,6 +171,15 @@ def _parse(uid: int, raw: bytes, internal_date: float | None) -> Message:
         name, addr = (getaddresses([str(msg.get("from", ""))]) or [("", "")])[0]
     except Exception:
         name, addr = "", str(msg.get("from", ""))
+    def addresses(*headers):
+        out = []
+        for h in headers:
+            try:
+                values = [str(v) for v in msg.get_all(h, [])]
+                out += [a.strip().lower() for _, a in getaddresses(values) if "@" in a]
+            except Exception:
+                pass
+        return out
     try:
         date = parsedate_to_datetime(str(msg["date"])).timestamp()
     except Exception:
@@ -199,7 +211,37 @@ def _parse(uid: int, raw: bytes, internal_date: float | None) -> Message:
         uid=uid, subject=subject, sender=name or addr, address=addr, date=date,
         text=text, html=html, code=find_code(subject, code_source),
         link=action_link(links, text),
+        recipients=addresses("to", "cc"), delivered=addresses("delivered-to", "x-original-to"),
     )
+
+
+def find_alias(recipients: list[str], delivered: list[str], login: str = "",
+               domains: tuple[str, ...] | list[str] = ()) -> str | None:
+    """Which of your addresses a mail was sent to, as a short name for sorting.
+
+    With a catch-all (discord@example.org) it's the local part, "discord";
+    with plus addressing (me+discord@example.org) it's the tag, "discord".
+    Mail to your main address, or with no address of yours in To/Cc (Bcc,
+    newsletters), gives None. Stalwart's Delivered-To names the catch-all's
+    target, i.e. your own address, so it tells which addresses and domains are
+    yours; the original recipient only survives in To/Cc.
+    """
+    own = {a.lower() for a in delivered}
+    if "@" in login:
+        own.add(login.lower())
+    domains = {d.lower().lstrip("@") for d in domains} | {a.rpartition("@")[2] for a in own}
+    own_locals = {a.rpartition("@")[0] for a in own}
+    for addr in recipients:
+        local, _, domain = addr.lower().rpartition("@")
+        if domain not in domains or not local:
+            continue
+        base, plus, tag = local.partition("+")
+        if plus and tag and base in own_locals:
+            return tag
+        if addr.lower() in own:
+            continue
+        return local
+    return None
 
 
 def safe_html(html: str) -> str:
@@ -220,6 +262,7 @@ class ImapSettings:
     security: str = "ssl"          # ssl | starttls | plain
     verify: bool = True
     cafile: str | None = None
+    alias_domains: tuple = ()      # your domains, for find_alias (more are learned from Delivered-To)
 
     def context(self) -> ssl.SSLContext:
         ctx = ssl.create_default_context(cafile=self.cafile)
@@ -250,6 +293,11 @@ class Mailbox:
         self.cache: dict[tuple[str, int, int], Message] = {}
         self.last_used = time.time()
         self._folders: tuple[float, list[dict]] | None = None
+
+    def _parse(self, uid: int, raw: bytes, idate: float | None) -> Message:
+        msg = parse(uid, raw, idate)
+        msg.alias = find_alias(msg.recipients, msg.delivered, self.user, self.settings.alias_domains)
+        return msg
 
     # connection
 
@@ -361,7 +409,7 @@ class Mailbox:
             flags = self._flags(conn, uids)
             missing = [u for u in uids if (folder, validity, u) not in self.cache]
             for uid, raw, idate in self._bodies(conn, missing):
-                msg = parse(uid, raw, idate)
+                msg = self._parse(uid, raw, idate)
                 msg.folder = folder
                 self.cache[(folder, validity, uid)] = msg
             out = []
@@ -390,7 +438,7 @@ class Mailbox:
             key = (folder, validity, uid)
             if key not in self.cache:
                 for u, raw, idate in self._bodies(conn, [uid]):
-                    msg = parse(u, raw, idate)
+                    msg = self._parse(u, raw, idate)
                     msg.folder = folder
                     self.cache[(folder, validity, u)] = msg
             msg = self.cache.get(key)

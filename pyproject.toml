@@ -1,6 +1,6 @@
 [project]
 name = "thinmail"
-version = "0.1.0"
+version = "0.2.0"
 description = "Thin web inbox for a Stalwart mailbox: login page, recent mail, 2FA codes one click away"
 requires-python = ">=3.10"
 dependencies = []
